@@ -1,0 +1,4 @@
+[submodule "jextract"]
+	path = jextract
+	url = https://github.com/tmquan2508/jextract.git
+	branch = jdk21
