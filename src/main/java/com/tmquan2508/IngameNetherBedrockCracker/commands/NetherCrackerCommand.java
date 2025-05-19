@@ -30,7 +30,7 @@ public class NetherCrackerCommand {
     private static final int Y_LEVEL_FLOOR = 4;
     private static final int Y_LEVEL_CEILING = 123;
 
-    public record FoundBedrock(int x, int y, int z, int type) {} // type giờ là int
+    public record FoundBedrock(int x, int y, int z, int type) {}
 
 
     public static void register(CommandDispatcher<FabricClientCommandSource> dispatcher) {
@@ -70,8 +70,8 @@ public class NetherCrackerCommand {
                     CrackerTask task = new CrackerTask(
                             bedrockBlocks,
                             threads,
-                            bedrock_cracker_h.BedrockGeneration_Normal(), // Gọi phương thức để lấy giá trị int
-                            bedrock_cracker_h.OutputMode_WorldSeed()    // Gọi phương thức để lấy giá trị int
+                            bedrock_cracker_h.BedrockGeneration_Normal(),
+                            bedrock_cracker_h.OutputMode_WorldSeed()
                     );
                     IngameNetherBedrockCracker.currentTask = new Thread(task);
                     IngameNetherBedrockCracker.currentTask.setName("NetherBedrockCracker-Worker");
@@ -161,12 +161,12 @@ public class NetherCrackerCommand {
 
                             mutablePos.set(worldX, Y_LEVEL_FLOOR, worldZ);
                             if (chunk.getBlockState(mutablePos).isOf(Blocks.BEDROCK)) {
-                                bedrockPositions.add(new FoundBedrock(worldX, Y_LEVEL_FLOOR, worldZ, bedrock_cracker_h.BlockType_BEDROCK())); // Lấy giá trị int
+                                bedrockPositions.add(new FoundBedrock(worldX, Y_LEVEL_FLOOR, worldZ, bedrock_cracker_h.BlockType_BEDROCK()));
                             }
 
                             mutablePos.set(worldX, Y_LEVEL_CEILING, worldZ);
                             if (chunk.getBlockState(mutablePos).isOf(Blocks.BEDROCK)) {
-                                bedrockPositions.add(new FoundBedrock(worldX, Y_LEVEL_CEILING, worldZ, bedrock_cracker_h.BlockType_BEDROCK())); // Lấy giá trị int
+                                bedrockPositions.add(new FoundBedrock(worldX, Y_LEVEL_CEILING, worldZ, bedrock_cracker_h.BlockType_BEDROCK()));
                             }
                         }
                     }

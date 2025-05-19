@@ -3,7 +3,7 @@ import dev.tmquan2508.netherbedrockseedcracker.buildscript.CopyNativeLibTask
 
 plugins {
 	id 'java'
-	id 'fabric-loom' version '1.10.5' // Đảm bảo phiên bản loom hỗ trợ cấu hình vmArg theo cách này
+    id'fabric-loom' version '1.10-SNAPSHOT'
 	id 'maven-publish'
 }
 
@@ -71,18 +71,15 @@ tasks.withType(JavaCompile).configureEach {
 	])
 }
 
-// BỔ SUNG QUAN TRỌNG CHO RUNTIME
 loom {
     runs {
         client {
             vmArg "--enable-preview"
         }
-        server { // Nếu bạn có và sử dụng
+        server {
             vmArg "--enable-preview"
         }
-        // data { // Nếu bạn có data generation và nó dùng code FFM
-        //    vmArg "--enable-preview"
-        // }
+
     }
 }
 
@@ -100,6 +97,6 @@ publishing {
 		}
 	}
 	repositories {
-		// Để trống nếu không publish ra repo nào, hoặc cấu hình repo của bạn
+		
 	}
 }

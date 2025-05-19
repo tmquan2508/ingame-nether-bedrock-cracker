@@ -53,7 +53,7 @@ public class NativeBedrockCrackerLibrary {
                 return foundSeeds;
             }
             
-            MemorySegment persistentVecI64 = Arena.global().allocate(VecI64.$LAYOUT()); // SỬA Ở ĐÂY
+            MemorySegment persistentVecI64 = Arena.global().allocate(VecI64.$LAYOUT());
             persistentVecI64.copyFrom(vecI64Native);
             memoryHolder.setNativeResults(persistentVecI64);
 

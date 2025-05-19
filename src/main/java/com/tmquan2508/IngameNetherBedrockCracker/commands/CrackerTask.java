@@ -2,7 +2,6 @@ package com.tmquan2508.IngameNetherBedrockCracker.commands;
 
 import com.tmquan2508.IngameNetherBedrockCracker.IngameNetherBedrockCracker;
 import com.tmquan2508.IngameNetherBedrockCracker.bridge.NativeBedrockCrackerLibrary;
-import com.github.netherbedrockcracker.bedrock_cracker_h;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.text.Text;
 
@@ -15,12 +14,12 @@ import static com.tmquan2508.IngameNetherBedrockCracker.IngameNetherBedrockCrack
 public class CrackerTask implements Runnable {
     private final List<NetherCrackerCommand.FoundBedrock> blocksToCrack;
     private final int threads;
-    private final int generationMode; // Giờ là int
-    private final int outputMode;     // Giờ là int
+    private final int generationMode;
+    private final int outputMode;
 
     public CrackerTask(List<NetherCrackerCommand.FoundBedrock> blocksToCrack, int threads,
-                       int generationMode, // Nhận int
-                       int outputMode) {     // Nhận int
+                       int generationMode,
+                       int outputMode) {
         this.blocksToCrack = blocksToCrack;
         this.threads = threads;
         this.generationMode = generationMode;
