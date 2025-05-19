@@ -1,11 +1,11 @@
 package com.tmquan2508.IngameNetherBedrockCracker;
 
-// Bỏ qua import NativeBedrockCrackerLibrary ở bước này
-// import com.tmquan2508.IngameNetherBedrockCracker.bridge.NativeBedrockCrackerLibrary;
-import com.tmquan2508.IngameNetherBedrockCracker.commands.NetherCrackerCommand; // Thêm import này
+import com.tmquan2508.IngameNetherBedrockCracker.bridge.NativeBedrockCrackerLibrary;
+import com.tmquan2508.IngameNetherBedrockCracker.commands.NetherCrackerCommand;
 
 import net.fabricmc.api.ClientModInitializer;
-import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback; // Thêm import này
+import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.ModContainer;
 import org.slf4j.Logger;
@@ -16,7 +16,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-// import java.nio.file.StandardCopyOption; // Không còn dùng đến
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class IngameNetherBedrockCracker implements ClientModInitializer {
@@ -24,13 +25,20 @@ public class IngameNetherBedrockCracker implements ClientModInitializer {
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
     private static final AtomicBoolean nativeLibraryLoaded = new AtomicBoolean(false);
-    private static String loadedLibraryPath = null; // Để lưu đường dẫn nếu cần sau này
+
+    public static Thread currentTask = null;
+    public static final AtomicBoolean isCracking = new AtomicBoolean(false);
+    public static long startTimeMillis = 0;
+    public static final List<Long> foundSeeds = new CopyOnWriteArrayList<>();
+    public static final NativeBedrockCrackerLibrary.NativeMemoryHolder nativeMemoryHolder = new NativeBedrockCrackerLibrary.NativeMemoryHolder();
+    public static final Object LOCK = new Object();
+
 
     static {
         LOGGER.info("[{}] Static initializer: Attempting to load native library...", MOD_ID);
-        String baseLibraryName = "bedrock_cracker"; // Tên gốc của thư viện Rust/C
-        String mappedLibraryName = System.mapLibraryName(baseLibraryName); // vd: libbedrock_cracker.dylib
-        String libraryPathInJar = "native/" + mappedLibraryName; // Đường dẫn trong resources/native/
+        String baseLibraryName = "bedrock_cracker";
+        String mappedLibraryName = System.mapLibraryName(baseLibraryName);
+        String libraryPathInJar = "native/" + mappedLibraryName;
 
         Path tempFile = null;
 
@@ -63,7 +71,7 @@ public class IngameNetherBedrockCracker implements ClientModInitializer {
                 }
             }
 
-            loadedLibraryPath = tempFile.toAbsolutePath().toString();
+            String loadedLibraryPath = tempFile.toAbsolutePath().toString();
             LOGGER.info("[{}] Attempting to load native library from: {}", MOD_ID, loadedLibraryPath);
 
             System.load(loadedLibraryPath);
@@ -91,16 +99,25 @@ public class IngameNetherBedrockCracker implements ClientModInitializer {
         LOGGER.info("[{}] onInitializeClient called.", MOD_ID);
         if (nativeLibraryLoaded.get()) {
             LOGGER.info("[{}] Native library was loaded successfully. Mod can proceed.", MOD_ID);
-            // Khởi tạo Native Bindings ở đây nếu cần sau khi thư viện đã nạp
-            // NativeBedrockCrackerLibrary.initializeNativeBindings(loadedLibraryPath);
         } else {
             LOGGER.error("[{}] Native library FAILED to load. Mod will NOT function correctly.", MOD_ID);
         }
 
-        // Đăng ký command
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
             NetherCrackerCommand.register(dispatcher);
         });
         LOGGER.info("[{}] Registered client commands.", MOD_ID);
+        
+        ClientTickEvents.END_CLIENT_TICK.register(client -> {
+            if (isCracking.get() && (currentTask == null || !currentTask.isAlive())) {
+                if (currentTask != null && currentTask.isInterrupted()){
+                     LOGGER.info("[{}] Cracker task was confirmed interrupted or finished unexpectedly after interrupt.", MOD_ID);
+                } else {
+                     LOGGER.warn("[{}] Cracker task finished or died unexpectedly.", MOD_ID);
+                }
+                isCracking.set(false);
+                currentTask = null;
+            }
+        });
     }
 }

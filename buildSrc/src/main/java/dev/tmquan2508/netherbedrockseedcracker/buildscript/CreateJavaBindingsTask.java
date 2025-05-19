@@ -24,7 +24,6 @@ public class CreateJavaBindingsTask extends Exec {
             "--source",
             "--output", outputDirectory,
             "--target-package", targetPackageName,
-            "--library", libraryName,
             headerFilePath
         );
     }
