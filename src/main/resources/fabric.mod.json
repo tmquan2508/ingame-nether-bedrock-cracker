@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "id": "ingame_nether_bedrock_cracker",
+  "version": "${version}",
+  "name": "Ingame Nether Bedrock Cracker",
+  "description": "This is an example description! Tell everyone what your mod is about!",
+  "authors": [
+    "Me!"
+  ],
+  "contact": {
+    "homepage": "https://fabricmc.net/",
+    "sources": "https://github.com/FabricMC/fabric-example-mod"
+  },
+  "license": "CC0-1.0",
+  "icon": "assets/ingame_nether_bedrock_cracker/icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "main": [],
+    "client": [
+      "com.tmquan2508.IngameNetherBedrockCracker.IngameNetherBedrockCracker"
+    ]
+  },
+  "mixins": [
+    "ingame_nether_bedrock_cracker.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.16.5",
+    "fabric-api": "*",
+    "minecraft": "~1.21",
+    "java": ">=21"
+  },
+  "suggests": {
+    "another-mod": "*"
+  }
+}

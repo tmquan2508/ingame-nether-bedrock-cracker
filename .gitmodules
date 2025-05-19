@@ -1,4 +1,9 @@
 [submodule "jextract"]
 	path = jextract
-	url = https://github.com/tmquan2508/jextract.git
+	url = https://github.com/tmquan2508/jextract
 	branch = jdk21
+
+[submodule "src/main/nbc"]
+    path = src/main/nbc
+    url = https://github.com/tmquan2508/Nether_Bedrock_Cracker
+	branch = jna

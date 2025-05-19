@@ -1,0 +1,105 @@
+import dev.tmquan2508.netherbedrockseedcracker.buildscript.CreateJavaBindingsTask
+import dev.tmquan2508.netherbedrockseedcracker.buildscript.CopyNativeLibTask
+
+plugins {
+	id 'java'
+	id 'fabric-loom' version '1.10.5' // Đảm bảo phiên bản loom hỗ trợ cấu hình vmArg theo cách này
+	id 'maven-publish'
+}
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(21)
+	}
+	withSourcesJar()
+}
+
+tasks.register('createJavaBindings', CreateJavaBindingsTask) {
+	group = 'build'
+	description = 'Generates Java bindings for the native library using JExtract.'
+}
+
+tasks.register('copyNativeLib', CopyNativeLibTask) {
+	group = 'build'
+	description = 'Copies bedrock_cracker native library into resources/native.'
+}
+
+tasks.named('compileJava') {
+	dependsOn tasks.named('createJavaBindings')
+	dependsOn tasks.named('copyNativeLib')
+}
+
+sourceSets {
+	main {
+		java {
+			srcDirs = ['src/main/java']
+		}
+	}
+}
+
+sourceCompatibility = JavaVersion.VERSION_21
+targetCompatibility = JavaVersion.VERSION_21
+
+archivesBaseName = project.archives_base_name
+version = project.mod_version
+group = project.maven_group
+
+repositories {
+	mavenCentral()
+	maven { url 'https://maven.fabricmc.net/' }
+}
+
+dependencies {
+	minecraft "com.mojang:minecraft:${project.minecraft_version}"
+	mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
+	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+}
+
+processResources {
+	inputs.property "version", project.version
+	filesMatching("fabric.mod.json") {
+		expand "version": project.version
+	}
+}
+
+tasks.withType(JavaCompile).configureEach {
+	it.options.encoding = 'UTF-8'
+	it.options.compilerArgs.addAll([
+		'--enable-preview',
+		'-Xlint:preview'
+	])
+}
+
+// BỔ SUNG QUAN TRỌNG CHO RUNTIME
+loom {
+    runs {
+        client {
+            vmArg "--enable-preview"
+        }
+        server { // Nếu bạn có và sử dụng
+            vmArg "--enable-preview"
+        }
+        // data { // Nếu bạn có data generation và nó dùng code FFM
+        //    vmArg "--enable-preview"
+        // }
+    }
+}
+
+
+jar {
+	from("LICENSE") {
+		rename { "${it}_${project.archivesBaseName}" }
+	}
+}
+
+publishing {
+	publications {
+		mavenJava(MavenPublication) {
+			from components.java
+		}
+	}
+	repositories {
+		// Để trống nếu không publish ra repo nào, hoặc cấu hình repo của bạn
+	}
+}
