@@ -21,7 +21,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class IngameNetherBedrockCracker implements ClientModInitializer {
-    public static final String MOD_ID = "ingame_nether_bedrock_cracker";
+    public static final String MOD_ID = "ingame-nether-bedrock-cracker";
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
     private static final AtomicBoolean nativeLibraryLoaded = new AtomicBoolean(false);
