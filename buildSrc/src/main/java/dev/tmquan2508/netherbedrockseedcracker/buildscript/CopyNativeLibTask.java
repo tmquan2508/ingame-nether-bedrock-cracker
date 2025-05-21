@@ -17,9 +17,9 @@ public class CopyNativeLibTask extends DefaultTask {
 
     @TaskAction
     public void copyAndModifyNativeLib() throws Exception {
-        String baseName = "bedrock_cracker"; // Tên gốc của thư viện Rust/C
-        String libName = System.mapLibraryName(baseName); // Sẽ là libbedrock_cracker.dylib trên macOS
-        String targetArchPath = ""; // Để trống nếu build cho kiến trúc hiện tại
+        String baseName = "bedrock_cracker";
+        String libName = System.mapLibraryName(baseName);
+        String targetArchPath = "";
 
         File projectDir = getProject().getProjectDir();
         File submoduleBuildDir = new File(projectDir, "src/main/nbc/target/" + targetArchPath + "release/");
@@ -45,10 +45,7 @@ public class CopyNativeLibTask extends DefaultTask {
 
         String osName = System.getProperty("os.name").toLowerCase();
         if (osName.contains("mac")) {
-            // Đặt ID của thư viện thành CHÍNH TÊN TỆP CỦA NÓ
-            // Điều này quan trọng để System.load() hoạt động chính xác
-            // mà không phụ thuộc vào đường dẫn build gốc.
-            String newInstallName = libName; // Ví dụ: "libbedrock_cracker.dylib"
+            String newInstallName = libName;
 
             List<String> command = new ArrayList<>(Arrays.asList(
                 "install_name_tool",
@@ -61,12 +58,11 @@ public class CopyNativeLibTask extends DefaultTask {
 
             ExecResult result = getProject().exec(execSpec -> {
                 execSpec.commandLine(command);
-                execSpec.setIgnoreExitValue(true); // Kiểm tra thủ công
+                execSpec.setIgnoreExitValue(true);
             });
 
             if (result.getExitValue() == 0) {
                 getLogger().lifecycle("Successfully changed install name for " + destLibPath.getFileName());
-                // (Tùy chọn) Xác minh bằng otool
                 List<String> otoolCommand = new ArrayList<>(Arrays.asList(
                     "otool",
                     "-L",
@@ -75,11 +71,9 @@ public class CopyNativeLibTask extends DefaultTask {
                 getLogger().lifecycle("Verifying install name with command: " + String.join(" ", otoolCommand));
                 getProject().exec(execSpec -> {
                     execSpec.commandLine(otoolCommand);
-                    // execSpec.setStandardOutput(System.out); // Để xem output nếu cần
                 });
             } else {
                 getLogger().error("Failed to change install name for " + destLibPath.getFileName() + ". Exit code: " + result.getExitValue());
-                // Có thể throw exception ở đây nếu muốn build thất bại
             }
         } else {
             getLogger().lifecycle("Skipping install_name_tool step on non-macOS system: " + osName);

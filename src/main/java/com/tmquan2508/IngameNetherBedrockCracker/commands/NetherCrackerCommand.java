@@ -74,7 +74,7 @@ public class NetherCrackerCommand {
                             bedrock_cracker_h.OutputMode_WorldSeed()
                     );
                     IngameNetherBedrockCracker.currentTask = new Thread(task);
-                    IngameNetherBedrockCracker.currentTask.setName("NetherBedrockCracker-Worker");
+                    IngameNetherBedrockCracker.currentTask.setName("NBC-Worker");
                     IngameNetherBedrockCracker.currentTask.start();
 
                     return Command.SINGLE_SUCCESS;
