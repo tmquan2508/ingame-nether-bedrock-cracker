@@ -9,8 +9,6 @@ jobs:
         java: [21]
         os: [ubuntu-latest, windows-latest, macos-latest]
     runs-on: ${{ matrix.os }}
-    env:
-      LLVM_INSTALL_PATH: ${{ runner.temp }}/llvm13
 
     steps:
       - name: Checkout repository
@@ -41,32 +39,34 @@ jobs:
       - name: Install LLVM 13 (Linux)
         if: runner.os == 'Linux'
         run: |
+          LLVM_CUSTOM_PATH="${{ runner.temp }}/llvm13"
+          echo "LLVM_HOME=${LLVM_CUSTOM_PATH}" >> $GITHUB_ENV
           wget --no-verbose https://github.com/llvm/llvm-project/releases/download/llvmorg-13.0.0/clang+llvm-13.0.0-x86_64-linux-gnu-ubuntu-20.04.tar.xz -O llvm.tar.xz
           tar -xf llvm.tar.xz
-          mkdir -p ${{ env.LLVM_INSTALL_PATH }}
-          mv clang+llvm-13.0.0-*/* ${{ env.LLVM_INSTALL_PATH }}/
-          echo "${{ env.LLVM_INSTALL_PATH }}/bin" >> $GITHUB_PATH
+          mkdir -p "$LLVM_CUSTOM_PATH"
+          mv clang+llvm-13.0.0-*/* "$LLVM_CUSTOM_PATH"/
+          echo "${LLVM_CUSTOM_PATH}/bin" >> $GITHUB_PATH
 
       # Install LLVM 13 for macOS
       - name: Install LLVM 13 (macOS)
         if: runner.os == 'macOS'
         run: |
           brew install llvm@13
+          echo "LLVM_HOME=/usr/local/opt/llvm@13" >> $GITHUB_ENV
           echo "/usr/local/opt/llvm@13/bin" >> $GITHUB_PATH
-          echo "LLVM_INSTALL_PATH=/usr/local/opt/llvm@13" >> $GITHUB_ENV
 
       # Install LLVM 13 for Windows
       - name: Install LLVM 13 (Windows)
         if: runner.os == 'Windows'
         run: |
           choco install llvm --version=13.0.0 -y
-          echo "LLVM_INSTALL_PATH=C:\\Program Files\\LLVM" >> $env:GITHUB_ENV
+          echo "LLVM_HOME=C:\\Program Files\\LLVM" >> $env:GITHUB_ENV
           echo "C:\\Program Files\\LLVM\\bin" | Out-File -Append -FilePath $env:GITHUB_PATH -Encoding utf8
 
       - name: Compile jextract
         working-directory: jextract
         run: |
-          ./gradlew --stacktrace -Pjdk21_home=$JAVA_HOME -Pllvm_home="${{ env.LLVM_INSTALL_PATH }}" clean verify
+          ./gradlew --stacktrace -Pjdk21_home=$JAVA_HOME -Pllvm_home="${{ env.LLVM_HOME }}" clean verify
         shell: bash
 
       - name: Build Native Library
