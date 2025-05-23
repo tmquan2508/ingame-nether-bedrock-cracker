@@ -35,31 +35,31 @@ jobs:
             echo "Warning: ./jextract/gradlew not found. Skipping chmod."
           fi
 
-      # Install LLVM 13 for Linux
-      - name: Install LLVM 13 (Linux)
+      # Install LLVM for Linux
+      - name: Install LLVM (Linux)
         if: runner.os == 'Linux'
         run: |
           LLVM_CUSTOM_PATH="${{ runner.temp }}/llvm13"
           echo "LLVM_HOME=${LLVM_CUSTOM_PATH}" >> $GITHUB_ENV
-          wget --no-verbose https://github.com/llvm/llvm-project/releases/download/llvmorg-13.0.0/clang+llvm-13.0.0-x86_64-linux-gnu-ubuntu-20.04.tar.xz -O llvm.tar.xz
+          wget --no-verbose https://github.com/llvm/llvm-project/releases/download/llvmorg-20.1.4/LLVM-20.1.4-Linux-X64.tar.xz -O llvm.tar.xz
           tar -xf llvm.tar.xz
           mkdir -p "$LLVM_CUSTOM_PATH"
           mv clang+llvm-13.0.0-*/* "$LLVM_CUSTOM_PATH"/
           echo "${LLVM_CUSTOM_PATH}/bin" >> $GITHUB_PATH
 
-      # Install LLVM 13 for macOS
-      - name: Install LLVM 13 (macOS)
+      # Install LLVM for macOS
+      - name: Install LLVM (macOS)
         if: runner.os == 'macOS'
         run: |
-          brew install llvm@13
-          echo "LLVM_HOME=/usr/local/opt/llvm@13" >> $GITHUB_ENV
-          echo "/usr/local/opt/llvm@13/bin" >> $GITHUB_PATH
+          brew install llvm
+          echo "LLVM_HOME=/usr/local/opt/llvm" >> $GITHUB_ENV
+          echo "/usr/local/opt/llvm/bin" >> $GITHUB_PATH
 
-      # Install LLVM 13 for Windows
-      - name: Install LLVM 13 (Windows)
+      # Install LLVM for Windows
+      - name: Install LLVM (Windows)
         if: runner.os == 'Windows'
         run: |
-          choco install llvm --version=13.0.0 -y
+          choco install llvm -y
           echo "LLVM_HOME=C:\\Program Files\\LLVM" >> $env:GITHUB_ENV
           echo "C:\\Program Files\\LLVM\\bin" | Out-File -Append -FilePath $env:GITHUB_PATH -Encoding utf8
 
