@@ -23,7 +23,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           java-version: ${{ matrix.java }}
-          distribution: 'microsoft'
+          distribution: 'graalvm'
 
       - name: Make Gradle wrappers executable (Linux/macOS)
         if: runner.os != 'Windows'
@@ -35,38 +35,16 @@ jobs:
             echo "Warning: ./jextract/gradlew not found. Skipping chmod."
           fi
 
-      # Install LLVM for Linux
-      - name: Install LLVM (Linux)
-        if: runner.os == 'Linux'
-        run: |
-          LLVM_CUSTOM_PATH="${{ runner.temp }}/llvm13"
-          echo "LLVM_HOME=${LLVM_CUSTOM_PATH}" >> $GITHUB_ENV
-          wget --no-verbose https://github.com/llvm/llvm-project/releases/download/llvmorg-20.1.4/LLVM-20.1.4-Linux-X64.tar.xz -O llvm.tar.xz
-          tar -xf llvm.tar.xz
-          mkdir -p "$LLVM_CUSTOM_PATH"
-          mv clang+llvm-13.0.0-*/* "$LLVM_CUSTOM_PATH"/
-          echo "${LLVM_CUSTOM_PATH}/bin" >> $GITHUB_PATH
-
-      # Install LLVM for macOS
-      - name: Install LLVM (macOS)
-        if: runner.os == 'macOS'
-        run: |
-          brew install llvm
-          echo "LLVM_HOME=/usr/local/opt/llvm" >> $GITHUB_ENV
-          echo "/usr/local/opt/llvm/bin" >> $GITHUB_PATH
-
-      # Install LLVM for Windows
-      - name: Install LLVM (Windows)
-        if: runner.os == 'Windows'
-        run: |
-          choco install llvm -y
-          echo "LLVM_HOME=C:\\Program Files\\LLVM" >> $env:GITHUB_ENV
-          echo "C:\\Program Files\\LLVM\\bin" | Out-File -Append -FilePath $env:GITHUB_PATH -Encoding utf8
+      - name: Install LLVM and Clang
+        uses: KyleMayes/install-llvm-action@v2
+        id: install-llvm
+        with:
+          version: "13.0"
 
       - name: Compile jextract
         working-directory: jextract
         run: |
-          ./gradlew --stacktrace -Pjdk21_home=$JAVA_HOME -Pllvm_home="${{ env.LLVM_HOME }}" clean verify
+          ./gradlew --stacktrace -Pjdk21_home=$JAVA_HOME -Pllvm_home="${{ env.LLVM_PATH }}" clean verify
         shell: bash
 
       - name: Build Native Library
