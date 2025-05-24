@@ -19,7 +19,7 @@ public class CrackerProgressInfo {
     public boolean isCrackingActive() { return isCrackingActive; }
 
     public double getPercentage() {
-        if (!isCrackingActive || totalUnitsToProcess == 0) return isCrackingActive ? 0.0 : 100.0; // Nếu không active và không có lỗi, coi như 100%
+        if (!isCrackingActive || totalUnitsToProcess == 0) return isCrackingActive ? 0.0 : 100.0;
         return Math.min(100.0, (double) unitsProcessedSoFar * 100.0 / totalUnitsToProcess);
     }
 

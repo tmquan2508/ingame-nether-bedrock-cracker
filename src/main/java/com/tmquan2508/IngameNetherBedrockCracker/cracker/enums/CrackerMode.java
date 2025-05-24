@@ -1,10 +1,10 @@
 package com.tmquan2508.IngameNetherBedrockCracker.cracker.enums;
 
-import com.github.netherbedrockcracker.bedrock_cracker_h; // Quan trọng: import JExtract generated class
+import com.github.netherbedrockcracker.bedrock_cracker_h;
 
 public enum CrackerMode {
     NORMAL(bedrock_cracker_h.BedrockGeneration_Normal()),
-    PAPER1_18(bedrock_cracker_h.BedrockGeneration_Paper1_18()); // Đổi tên enum khớp với ALLOWED_GENERATION_TYPES
+    PAPER1_18(bedrock_cracker_h.BedrockGeneration_Paper1_18());
 
     private final int nativeValue;
 

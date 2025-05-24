@@ -1,6 +1,6 @@
 package com.tmquan2508.IngameNetherBedrockCracker.commands.subcommands;
 
-import com.github.netherbedrockcracker.bedrock_cracker_h; // Import JExtract h file
+import com.github.netherbedrockcracker.bedrock_cracker_h;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -9,9 +9,10 @@ import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import com.tmquan2508.IngameNetherBedrockCracker.IngameNetherBedrockCracker;
 import com.tmquan2508.IngameNetherBedrockCracker.cracker.BedrockCrackerService;
-import com.tmquan2508.IngameNetherBedrockCracker.cracker.dto.BlockInput; // Import DTO
-import com.tmquan2508.IngameNetherBedrockCracker.cracker.enums.CrackerMode; // Import Enum
-import com.tmquan2508.IngameNetherBedrockCracker.gameintegration.BedrockFinder;
+import com.tmquan2508.IngameNetherBedrockCracker.cracker.dto.BlockInput;
+import com.tmquan2508.IngameNetherBedrockCracker.cracker.enums.CrackerMode;
+import com.tmquan2508.IngameNetherBedrockCracker.helpers.BedrockFinder;
+
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.client.MinecraftClient;
@@ -29,9 +30,7 @@ public class StartCommand {
 
     private static final String[] ALLOWED_GENERATION_TYPES = {"NORMAL", "PAPER1_18"};
 
-    public static void register(LiteralArgumentBuilder<FabricClientCommandSource> parent,
-                                BedrockCrackerService crackerService,
-                                BedrockFinder bedrockFinder) {
+    public static void register(LiteralArgumentBuilder<FabricClientCommandSource> parent, BedrockCrackerService crackerService) {
         parent.then(ClientCommandManager.literal("start")
             .then(ClientCommandManager.argument("generationType", StringArgumentType.string())
                 .suggests(StartCommand::suggestGenerationTypes)
@@ -70,13 +69,12 @@ public class StartCommand {
                         IngameNetherBedrockCracker.LOGGER.info("'/nethercracker start' command initiated. Type: {}, Threads: {}", crackerMode.name(), threadsArg);
                         context.getSource().sendFeedback(Text.literal("Scanning for bedrock formations... This might take a moment."));
 
-                        // Thực hiện tìm bedrock và bắt đầu crack bất đồng bộ để không block game thread
                         CompletableFuture.runAsync(() -> {
                             try {
-                                BlockPos playerPos = player.getBlockPos(); // Lấy vị trí player trong thread này nếu an toàn, hoặc truyền từ context
-                                List<BedrockFinder.FoundBedrock> foundRawBedrock = bedrockFinder.findBedrockNearby(world, playerPos);
+                                BlockPos playerPos = player.getBlockPos();
+                                List<BedrockFinder.FoundBedrock> foundRawBedrock = BedrockFinder.findBedrockNearby(world, playerPos);
 
-                                MinecraftClient.getInstance().execute(() -> { // Gửi phản hồi về main thread
+                                MinecraftClient.getInstance().execute(() -> {
                                     if (foundRawBedrock.isEmpty()) {
                                         IngameNetherBedrockCracker.LOGGER.warn("No bedrock found nearby for cracking.");
                                         context.getSource().sendError(Text.literal("No bedrock found at y=" +
@@ -107,9 +105,7 @@ public class StartCommand {
                                     context.getSource().sendError(Text.literal("An error occurred: " + e.getMessage()))
                                 );
                             }
-                        }); // Không cần chỉ định executor ở đây, sẽ dùng ForkJoinPool.commonPool()
-
-                        // Trả về ngay, không đợi CompletableFuture
+                        });
                         return Command.SINGLE_SUCCESS;
                     })
                 )

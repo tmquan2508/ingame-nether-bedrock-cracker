@@ -4,7 +4,7 @@ public class BlockInput {
     private final int x;
     private final int y;
     private final int z;
-    private final int blockType; // Sẽ là giá trị int từ JExtract (BlockType_BEDROCK hoặc BlockType_OTHER)
+    private final int blockType;
 
     public BlockInput(int x, int y, int z, int blockType) {
         this.x = x;

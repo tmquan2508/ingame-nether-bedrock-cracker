@@ -2,21 +2,20 @@ package com.tmquan2508.IngameNetherBedrockCracker.commands.subcommands;
 
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
-import com.tmquan2508.IngameNetherBedrockCracker.IngameNetherBedrockCracker; // Thêm nếu cần log
-import com.tmquan2508.IngameNetherBedrockCracker.cracker.BedrockCrackerService; // Thêm import
+import com.tmquan2508.IngameNetherBedrockCracker.IngameNetherBedrockCracker;
+import com.tmquan2508.IngameNetherBedrockCracker.cracker.BedrockCrackerService;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
-import net.minecraft.text.Text; // Thêm import
+import net.minecraft.text.Text;
 
 public class StopCommand {
-    // Sửa signature của phương thức register
     public static void register(LiteralArgumentBuilder<FabricClientCommandSource> parent,
                                 BedrockCrackerService crackerService) {
         parent.then(ClientCommandManager.literal("stop")
             .executes(context -> {
                 IngameNetherBedrockCracker.LOGGER.info("'/nethercracker stop' command executed.");
 
-                if (crackerService.isCrackingActive()) { // Kiểm tra xem có gì để dừng không
+                if (crackerService.isCrackingActive()) {
                     crackerService.requestStop();
                     context.getSource().sendFeedback(Text.literal("Sent stop request to the cracking process. Check /nethercracker info for status."));
                 } else {

@@ -69,6 +69,7 @@ public class BedrockCrackerService {
                 }
 
                 int outputModeNative = CrackerOutputMode.WORLD_SEED.getNativeValue();
+                // int outputModeNative = CrackerOutputMode.STRUCTURE_SEED.getNativeValue();
                 MemorySegment vecI64Segment = bedrock_cracker_h.crack_ffi(arena, blocksArraySegment, blockInputs.size(), (long) threads, mode.getNativeValue(), outputModeNative);
                 MemorySegment ptr = VecI64.ptr$get(vecI64Segment);
                 long len = VecI64.len$get(vecI64Segment);

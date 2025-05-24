@@ -2,7 +2,7 @@ package com.tmquan2508.IngameNetherBedrockCracker.commands.subcommands;
 
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
-import com.tmquan2508.IngameNetherBedrockCracker.gameintegration.BedrockFinder; // Import đã có
+import com.tmquan2508.IngameNetherBedrockCracker.helpers.BedrockFinder;
 
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
@@ -19,7 +19,7 @@ import net.minecraft.util.math.BlockPos;
 import java.util.List;
 
 public class GetCommand {
-    public static void register(LiteralArgumentBuilder<FabricClientCommandSource> parent, BedrockFinder bedrockFinder) {
+    public static void register(LiteralArgumentBuilder<FabricClientCommandSource> parent) {
         parent.then(ClientCommandManager.literal("get").executes(context -> {
             ClientPlayerEntity player = context.getSource().getPlayer();
             ClientWorld world = context.getSource().getWorld();
@@ -35,9 +35,8 @@ public class GetCommand {
             }
 
             BlockPos senderPos = player.getBlockPos();
-            // Sử dụng instance bedrockFinder được truyền vào thay vì gọi static
             List<BedrockFinder.FoundBedrock> bedrockBlocks =
-                bedrockFinder.findBedrockNearby(world, senderPos);
+                BedrockFinder.findBedrockNearby(world, senderPos);
 
             if (bedrockBlocks.isEmpty()) {
                 context.getSource().sendFeedback(Text.literal("No bedrock found at y=" +
@@ -48,7 +47,6 @@ public class GetCommand {
 
             StringBuilder fullListBuilder = new StringBuilder();
             for (BedrockFinder.FoundBedrock bedrock : bedrockBlocks) {
-                // Thay đổi "Bedrock" thành "BEDROCK" để nhất quán với enum BlockType của JExtract
                 String line = String.format("%d %d %d BEDROCK", bedrock.x(), bedrock.y(), bedrock.z());
                 fullListBuilder.append(line).append("\n");
             }

@@ -1,4 +1,4 @@
-package com.tmquan2508.IngameNetherBedrockCracker.gameintegration;
+package com.tmquan2508.IngameNetherBedrockCracker.helpers;
 
 import net.minecraft.block.Blocks;
 import net.minecraft.client.world.ClientWorld;
