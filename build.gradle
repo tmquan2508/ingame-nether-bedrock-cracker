@@ -65,10 +65,7 @@ processResources {
 
 tasks.withType(JavaCompile).configureEach {
 	it.options.encoding = 'UTF-8'
-	it.options.compilerArgs.addAll([
-		'--enable-preview',
-		'-Xlint:preview'
-	])
+	it.options.compilerArgs += ["--enable-preview", "-Xlint:-preview"]
 }
 
 loom {
@@ -76,10 +73,6 @@ loom {
         client {
             vmArg "--enable-preview"
         }
-        server {
-            vmArg "--enable-preview"
-        }
-
     }
 }
 

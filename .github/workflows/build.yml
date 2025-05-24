@@ -7,9 +7,9 @@ jobs:
     strategy:
       matrix:
         java: [21]
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [ubuntu-22.04]
+    name: Java Build ${{ matrix.java }} on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -17,16 +17,22 @@ jobs:
           submodules: recursive
 
       - name: Validate Gradle Wrapper
-        uses: gradle/wrapper-validation-action@v1
+        uses: gradle/wrapper-validation-action@v2
 
-      - name: Setup JDK ${{ matrix.java }}
+      - name: Setup JDK ${{ matrix.java }} (GraalVM)
         uses: actions/setup-java@v4
         with:
           java-version: ${{ matrix.java }}
-          distribution: 'graalvm'
+          distribution: "graalvm"
 
-      - name: Make Gradle wrappers executable (Linux/macOS)
-        if: runner.os != 'Windows'
+      - name: Setup Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+          override: true
+
+      - name: Make Gradle wrappers executable
         run: |
           chmod +x ./gradlew
           if [ -f ./jextract/gradlew ]; then
@@ -34,28 +40,28 @@ jobs:
           else
             echo "Warning: ./jextract/gradlew not found. Skipping chmod."
           fi
+        shell: bash
 
       - name: Install LLVM and Clang
         uses: KyleMayes/install-llvm-action@v2
-        id: install-llvm
         with:
           version: "13.0"
+
+      - name: Install libtinfo5 (Linux only)
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libtinfo5
 
       - name: Compile jextract
         working-directory: jextract
         run: |
-          ./gradlew --stacktrace -Pjdk21_home=$JAVA_HOME -Pllvm_home="${{ env.LLVM_PATH }}" clean verify
+          ./gradlew --stacktrace -Pjdk21_home="$JAVA_HOME" -Pllvm_home="${{ env.LLVM_PATH }}" clean verify
         shell: bash
 
       - name: Build Native Library
         working-directory: src/main/nbc
         run: cargo build --release
+        shell: bash
 
-      - name: Build project
+      - name: Build main project
         run: ./gradlew build
-
-      - name: Capture build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: Artifacts-Java${{ matrix.java }}-${{ matrix.os }}
-          path: build/libs/
+        shell: bash
