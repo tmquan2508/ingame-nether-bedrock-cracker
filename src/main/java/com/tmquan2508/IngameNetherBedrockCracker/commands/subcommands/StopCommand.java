@@ -9,8 +9,7 @@ import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.text.Text;
 
 public class StopCommand {
-    public static void register(LiteralArgumentBuilder<FabricClientCommandSource> parent,
-                                BedrockCrackerService crackerService) {
+    public static void register(LiteralArgumentBuilder<FabricClientCommandSource> parent, BedrockCrackerService crackerService) {
         parent.then(ClientCommandManager.literal("stop")
             .executes(context -> {
                 IngameNetherBedrockCracker.LOGGER.info("'/nethercracker stop' command executed.");

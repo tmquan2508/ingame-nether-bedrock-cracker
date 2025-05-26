@@ -27,26 +27,24 @@ import java.util.Locale;
 import java.util.concurrent.CompletableFuture;
 
 public class StartCommand {
-
-    private static final String[] ALLOWED_GENERATION_TYPES = {"NORMAL", "PAPER1_18"};
+    private static final String[] GENERATION_TYPES = {"NORMAL", "PAPER1_18"};
+    private static final int MAX_THREADS = Math.max(1, Runtime.getRuntime().availableProcessors() - 2);
 
     public static void register(LiteralArgumentBuilder<FabricClientCommandSource> parent, BedrockCrackerService crackerService) {
         parent.then(ClientCommandManager.literal("start")
-            .then(ClientCommandManager.argument("generationType", StringArgumentType.string())
+            .then(ClientCommandManager.argument("generation", StringArgumentType.string())
                 .suggests(StartCommand::suggestGenerationTypes)
-                .then(ClientCommandManager.argument("threads", IntegerArgumentType.integer(1))
+                .then(ClientCommandManager.argument("threads", IntegerArgumentType.integer(1, MAX_THREADS))
                     .executes(context -> {
                         ClientPlayerEntity player = context.getSource().getPlayer();
                         ClientWorld world = context.getSource().getWorld();
 
                         if (player == null || world == null) {
-                            IngameNetherBedrockCracker.LOGGER.error("Command must be run by a player in a world.");
                             context.getSource().sendError(Text.literal("Command must be run by a player in a world."));
                             return 0;
                         }
 
                         if (!world.getRegistryKey().getValue().getPath().endsWith("the_nether")) {
-                            IngameNetherBedrockCracker.LOGGER.error("This command can only be used in The Nether.");
                             context.getSource().sendError(Text.literal("This command can only be used in The Nether."));
                             return 0;
                         }
@@ -56,7 +54,7 @@ public class StartCommand {
 
                         CrackerMode crackerMode = CrackerMode.fromString(generationTypeArg.toUpperCase(Locale.ROOT));
                         if (crackerMode == null) {
-                            String validOptions = String.join(", ", ALLOWED_GENERATION_TYPES);
+                            String validOptions = String.join(", ", GENERATION_TYPES);
                             context.getSource().sendError(Text.literal("Invalid generationType '" + generationTypeArg + "'. Allowed types are: " + validOptions));
                             return 0;
                         }
@@ -76,7 +74,6 @@ public class StartCommand {
 
                                 MinecraftClient.getInstance().execute(() -> {
                                     if (foundRawBedrock.isEmpty()) {
-                                        IngameNetherBedrockCracker.LOGGER.warn("No bedrock found nearby for cracking.");
                                         context.getSource().sendError(Text.literal("No bedrock found at y=" +
                                             BedrockFinder.Y_LEVEL_FLOOR + " or y=" + BedrockFinder.Y_LEVEL_CEILING +
                                             " within " + BedrockFinder.SEARCH_RADIUS_BLOCKS + " blocks."));
@@ -115,7 +112,7 @@ public class StartCommand {
 
     private static CompletableFuture<Suggestions> suggestGenerationTypes(com.mojang.brigadier.context.CommandContext<FabricClientCommandSource> context, SuggestionsBuilder builder) {
         String input = builder.getRemaining().toUpperCase(Locale.ROOT);
-        for (String type : ALLOWED_GENERATION_TYPES) {
+        for (String type : GENERATION_TYPES) {
             if (type.startsWith(input)) {
                 builder.suggest(type);
             }

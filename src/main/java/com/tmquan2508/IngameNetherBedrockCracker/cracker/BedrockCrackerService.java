@@ -154,7 +154,7 @@ public class BedrockCrackerService {
                     String.format("[PROGRESS_DEBUG] Discrepancy: Native inactive, service internal flag true, task NOT done. Final active: %b (Was nativeActive: %b, serviceManaging: %b)",
                     finalActiveState, nativeActive, serviceManagingTask)
                 );
-                 finalActiveState = false; // If native says not active, it's not active.
+                finalActiveState = false;
             }
 
 

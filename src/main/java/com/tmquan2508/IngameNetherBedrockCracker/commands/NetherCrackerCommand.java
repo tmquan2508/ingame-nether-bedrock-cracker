@@ -4,7 +4,6 @@ import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.tmquan2508.IngameNetherBedrockCracker.cracker.BedrockCrackerService;
-// import com.tmquan2508.IngameNetherBedrockCracker.helpers.BedrockFinder; // Không còn cần thiết ở đây
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.text.Text;
@@ -16,12 +15,10 @@ import com.tmquan2508.IngameNetherBedrockCracker.commands.subcommands.InfoComman
 
 public class NetherCrackerCommand {
 
-    // Tham số BedrockFinder bedrockFinder đã được xóa
-    public static void register(CommandDispatcher<FabricClientCommandSource> dispatcher,
-                                BedrockCrackerService crackerService) {
+    public static void register(CommandDispatcher<FabricClientCommandSource> dispatcher, BedrockCrackerService crackerService) {
         LiteralArgumentBuilder<FabricClientCommandSource> mainCommandNode = ClientCommandManager.literal("nethercracker")
             .executes(context -> {
-                context.getSource().sendFeedback(Text.literal("Usage: /nethercracker <get | start | stop | info> [args...]")); // Sửa lại usage message
+                context.getSource().sendFeedback(Text.literal("Usage: /nethercracker < get | start | stop | info > [args...]"));
                 return Command.SINGLE_SUCCESS;
             });
 

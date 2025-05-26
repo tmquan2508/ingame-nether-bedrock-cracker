@@ -54,7 +54,7 @@ public class GetCommand {
             String fullListStringToCopy = fullListBuilder.toString().trim();
 
             MutableText copyMessage = Text.empty()
-                .append(Text.literal("[").setStyle(Style.EMPTY.withColor(Formatting.WHITE)))
+                .append(Text.literal("Bedrocks Postion: [").setStyle(Style.EMPTY.withColor(Formatting.WHITE)))
                 .append(Text.literal("Click to copy all " + bedrockBlocks.size() + " locations")
                     .setStyle(Style.EMPTY
                         .withColor(Formatting.GREEN)
