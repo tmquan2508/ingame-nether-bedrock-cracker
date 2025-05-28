@@ -7,6 +7,7 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
+
 import com.tmquan2508.IngameNetherBedrockCracker.IngameNetherBedrockCracker;
 import com.tmquan2508.IngameNetherBedrockCracker.cracker.BedrockCrackerService;
 import com.tmquan2508.IngameNetherBedrockCracker.cracker.dto.BlockInput;
@@ -33,7 +34,7 @@ public class StartCommand {
     public static void register(LiteralArgumentBuilder<FabricClientCommandSource> parent, BedrockCrackerService crackerService) {
         parent.then(ClientCommandManager.literal("start")
             .then(ClientCommandManager.argument("generation", StringArgumentType.string())
-                .suggests(StartCommand::suggestGenerationTypes)
+                .suggests(StartCommand::suggestGenerations)
                 .then(ClientCommandManager.argument("threads", IntegerArgumentType.integer(1, MAX_THREADS))
                     .executes(context -> {
                         ClientPlayerEntity player = context.getSource().getPlayer();
@@ -49,13 +50,13 @@ public class StartCommand {
                             return 0;
                         }
 
-                        String generationTypeArg = StringArgumentType.getString(context, "generationType");
+                        String generationArg = StringArgumentType.getString(context, "generation");
                         int threadsArg = IntegerArgumentType.getInteger(context, "threads");
 
-                        CrackerMode crackerMode = CrackerMode.fromString(generationTypeArg.toUpperCase(Locale.ROOT));
+                        CrackerMode crackerMode = CrackerMode.fromString(generationArg.toUpperCase(Locale.ROOT));
                         if (crackerMode == null) {
                             String validOptions = String.join(", ", GENERATION_TYPES);
-                            context.getSource().sendError(Text.literal("Invalid generationType '" + generationTypeArg + "'. Allowed types are: " + validOptions));
+                            context.getSource().sendError(Text.literal("Invalid generation '" + generationArg + "'. Allowed types are: " + validOptions));
                             return 0;
                         }
 
@@ -110,7 +111,7 @@ public class StartCommand {
         );
     }
 
-    private static CompletableFuture<Suggestions> suggestGenerationTypes(com.mojang.brigadier.context.CommandContext<FabricClientCommandSource> context, SuggestionsBuilder builder) {
+    private static CompletableFuture<Suggestions> suggestGenerations(com.mojang.brigadier.context.CommandContext<FabricClientCommandSource> context, SuggestionsBuilder builder) {
         String input = builder.getRemaining().toUpperCase(Locale.ROOT);
         for (String type : GENERATION_TYPES) {
             if (type.startsWith(input)) {
