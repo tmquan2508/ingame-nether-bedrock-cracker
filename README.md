@@ -5,6 +5,16 @@
 
 This mod is base on [Nether_Bedrock_Cracker](https://github.com/19MisterX98/Nether_Bedrock_Cracker) by [19MisterX98](https://github.com/19MisterX98)
 
+# IMPORTANT
+You need to add `--enable-preview` into the Java arguments of your launcher.
+
+- Almost launcher: `Settings` -> `Java` -> `JVM arguments`
+- Pojav launcher: `Settings` -> `Java Tweaks` -> `JVM Launch arguments`
+
+If you use MultiMC or PrismLauncher, you can only add to the instance you use the mod:
+
+`Select Instance` -> `Edit` -> `Settings` -> `Java` -> `Java arguments`
+
 # Commands:
 - `/nethercracker start` start cracker
 - `/nethercracker info` get infomation of running progress
