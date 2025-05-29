@@ -3,6 +3,15 @@
 </div>
 <h1 align="center">Ingame Nether Bedrock Cracker</h1>
 
+This mod is base on [Nether_Bedrock_Cracker](https://github.com/19MisterX98/Nether_Bedrock_Cracker) by [19MisterX98](https://github.com/19MisterX98)
+
+# Commands:
+- `/nethercracker start` start cracker
+- `/nethercracker info` get infomation of running progress
+- `/nethercracker stop` stop cracker
+- `/nethercracker get` get list of bedrock coordinates at y=4 and y = 123
+
+# Example
 ![](./example/example.png)
 
 # Build with source
