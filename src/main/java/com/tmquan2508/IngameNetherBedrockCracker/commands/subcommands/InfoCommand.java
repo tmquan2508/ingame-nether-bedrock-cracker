@@ -15,10 +15,6 @@ public class InfoCommand {
                 CrackerProgressInfo progress = crackerService.getProgress();
 
                 context.getSource().sendFeedback(Text.literal(progress.toString()));
-                // context.getSource().sendFeedback(Text.literal("Cracking Status: " + (progress.isCrackingActive() ? "Active" : "Inactive")));
-                // context.getSource().sendFeedback(Text.literal(String.format("Progress: %.2f%% (%d / %d)",
-                // progress.getPercentage(), progress.getUnitsProcessedSoFar(), progress.getTotalUnitsToProcess())));
-                // context.getSource().sendFeedback(Text.literal("Seeds Found: " + progress.getSeedsFoundCount()));
 
                 return Command.SINGLE_SUCCESS;
             }));
