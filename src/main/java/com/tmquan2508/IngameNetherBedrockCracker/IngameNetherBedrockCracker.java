@@ -22,13 +22,12 @@ public class IngameNetherBedrockCracker implements ClientModInitializer {
     public static final String MOD_ID = "ingame-nether-bedrock-cracker";
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
-    // Khai báo các service
     private static BedrockCrackerService bedrockCrackerService;
 
     static {
         String baseLibraryName = "bedrock_cracker";
         String mappedLibraryName = System.mapLibraryName(baseLibraryName);
-        String libraryPathInJar = "native/" + mappedLibraryName;
+        String libraryPathInJar = "nativelib/" + mappedLibraryName;
 
         Path tempFile = null;
 

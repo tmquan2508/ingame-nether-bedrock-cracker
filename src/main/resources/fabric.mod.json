@@ -3,7 +3,7 @@
   "id": "ingame-nether-bedrock-cracker",
   "version": "${version}",
   "name": "Ingame Nether Bedrock Cracker",
-  "description": "This is an example description! Tell everyone what your mod is about!",
+  "description": "Seedcracker mod base on Nether Bedrock Cracker (19MisterX98)",
   "authors": [
     "tmquan2508"
   ],
@@ -16,9 +16,6 @@
       "com.tmquan2508.IngameNetherBedrockCracker.IngameNetherBedrockCracker"
     ]
   },
-  "mixins": [
-    "ingame-nether-bedrock-cracker.mixins.json"
-  ],
   "depends": {
     "fabricloader": ">=0.16.5",
     "fabric-api": "*",

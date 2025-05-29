@@ -16,11 +16,11 @@ public class CopyNativeLibTask extends DefaultTask {
         File projectDir = getProject().getProjectDir();
 
         Path srcLibPath = new File(projectDir, "src/main/nbc/target/release/" + libName).toPath();
-        Path destLibPath = new File(projectDir, "src/main/resources/native/" + libName).toPath();
+        Path destLibPath = new File(projectDir, "src/main/resources/nativelib/" + libName).toPath();
         
         Files.createDirectories(destLibPath.getParent());
 
         Files.copy(srcLibPath, destLibPath, StandardCopyOption.REPLACE_EXISTING);
-        getLogger().lifecycle("Copied " + libName + " to src/main/resources/native/");
+        getLogger().lifecycle("Copied " + libName + " to src/main/resources/nativelib/");
     }
 }
