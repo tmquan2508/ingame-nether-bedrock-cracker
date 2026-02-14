@@ -38,3 +38,5 @@ run/
 
 src/main/java/com/github/*
 src/main/resources/nativelib
+
+.DS_Store

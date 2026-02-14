@@ -16,10 +16,11 @@ If you use MultiMC or PrismLauncher, you can only add to the instance you use th
 `Select Instance` -> `Edit` -> `Settings` -> `Java` -> `Java arguments`
 
 # Commands:
-- `/nethercracker start` start cracker
-- `/nethercracker info` get infomation of running progress
-- `/nethercracker stop` stop cracker
-- `/nethercracker get` get list of bedrock coordinates at y=4 and y = 123
+- `/inbc start <mode> <threads>` start cracker
+- `/inbc info` get infomation of running progress
+- `/inbc stop` stop cracker
+- `/inbc get` get list of bedrock coordinates at y=4 and y = 123
+- `/inbc validate <seed> <mode>` validate seed with bedrock (overworld and nether)
 
 # Example
 ![](./example/example.png)

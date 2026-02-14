@@ -5,10 +5,10 @@ import com.tmquan2508.IngameNetherBedrockCracker.cracker.dto.BlockInput;
 import com.tmquan2508.IngameNetherBedrockCracker.cracker.dto.CrackerProgressInfo;
 import com.tmquan2508.IngameNetherBedrockCracker.cracker.enums.CrackerMode;
 import com.tmquan2508.IngameNetherBedrockCracker.cracker.enums.CrackerOutputMode;
+import com.tmquan2508.IngameNetherBedrockCracker.helpers.NativeHelper;
 
 import java.lang.foreign.Arena;
 import java.lang.foreign.FunctionDescriptor;
-import java.lang.foreign.Linker;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
 import java.lang.invoke.MethodHandle;
@@ -51,26 +51,48 @@ public class BedrockCrackerService {
     private final AtomicLong unitsProcessedSoFar = new AtomicLong(0);
     private final AtomicLong seedsFoundByCallbackCount = new AtomicLong(0);
 
-    private static BedrockCrackerService instanceForCallback;
-
     public BedrockCrackerService() {
-        instanceForCallback = this;
     }
 
-    private static void javaInitCallback(long totalUnits, long initialSeedsFound) {
-        BedrockCrackerService service = instanceForCallback;
-        if (service != null) {
-            service.totalUnitsToProcess.set(totalUnits);
-            service.unitsProcessedSoFar.set(0);
-            service.seedsFoundByCallbackCount.set(initialSeedsFound);
+    private void onInit(long totalUnits, long initialSeedsFound) {
+        this.totalUnitsToProcess.set(totalUnits);
+        this.unitsProcessedSoFar.set(0);
+        this.seedsFoundByCallbackCount.set(initialSeedsFound);
+        MinecraftClient.getInstance().execute(() -> {
+            updateStatusOverlay(Text.literal("Cracking Started...").formatted(Formatting.YELLOW));
+        });
+    }
+
+    private void onProgress(long processedDelta) {
+        long current = this.unitsProcessedSoFar.addAndGet(processedDelta);
+        long total = this.totalUnitsToProcess.get();
+        if (total > 0) {
+            double percentage = (double) current / total * 100.0;
+            if (percentage > 100.0)
+                percentage = 100.0;
+            String percentStr = String.format("%.2f%%", percentage);
+            MinecraftClient.getInstance().execute(() -> {
+                updateStatusOverlay(Text.literal("Cracking: ").formatted(Formatting.AQUA)
+                        .append(Text.literal(percentStr).formatted(Formatting.GREEN)));
+            });
         }
     }
 
-    private static void javaProgressCallback(long processedDelta) {
-        BedrockCrackerService service = instanceForCallback;
-        if (service != null) {
-            service.unitsProcessedSoFar.addAndGet(processedDelta);
+    private void updateStatusOverlay(Text message) {
+        MinecraftClient mc = MinecraftClient.getInstance();
+        if (mc.inGameHud != null) {
+            mc.inGameHud.setOverlayMessage(message, false);
         }
+    }
+
+    private void onSeedFound(long seed) {
+        this.progressivelyFoundSeeds.add(seed);
+        this.seedsFoundByCallbackCount.incrementAndGet();
+        MinecraftClient.getInstance().execute(() -> {
+            this.displaySeedToPlayer("Seed discovered: ", seed);
+            updateStatusOverlay(Text.literal("★ SEED FOUND: ").formatted(Formatting.GOLD, Formatting.BOLD)
+                    .append(Text.literal(String.valueOf(seed)).formatted(Formatting.WHITE)));
+        });
     }
 
     private void sendPlayerMessage(Text message) {
@@ -88,24 +110,10 @@ public class BedrockCrackerService {
                         .setStyle(Style.EMPTY
                                 .withColor(Formatting.GREEN)
                                 .withClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, seedString))
-                                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.literal("Copy to clipboard")))
-                        ))
+                                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                                        Text.literal("Copy to clipboard")))))
                 .append(Text.literal("]").setStyle(Style.EMPTY.withColor(Formatting.WHITE)));
         sendPlayerMessage(message);
-    }
-
-    private static void javaSeedFoundCallback(long seed) {
-        BedrockCrackerService service = instanceForCallback;
-        if (service != null) {
-            service.progressivelyFoundSeeds.add(seed);
-            service.seedsFoundByCallbackCount.incrementAndGet();
-            MinecraftClient.getInstance().execute(() -> service.displaySeedToPlayer("Seed discovered: ", seed));
-        }
-    }
-    
-    private MemorySegment createUpcall(MethodHandles.Lookup lookup, Class<?> targetClass, String methodName, MethodType methodType, FunctionDescriptor nativeDescriptor) throws NoSuchMethodException, IllegalAccessException {
-        MethodHandle mh = lookup.findStatic(targetClass, methodName, methodType);
-        return Linker.nativeLinker().upcallStub(mh, nativeDescriptor, this.callbackArena);
     }
 
     public synchronized boolean startCracking(List<BlockInput> blockInputs, CrackerMode mode, int threads) {
@@ -132,19 +140,22 @@ public class BedrockCrackerService {
         crackingTaskFuture = CompletableFuture.supplyAsync(() -> {
             List<Long> finalCollectedSeeds = new ArrayList<>();
             try {
+                NativeHelper nativeHelper = new NativeHelper(this.callbackArena);
                 MethodHandles.Lookup lookup = MethodHandles.lookup();
 
-                MemorySegment seedCallbackNativePtr = createUpcall(lookup, BedrockCrackerService.class, "javaSeedFoundCallback",
-                        MethodType.methodType(void.class, long.class),
-                        FunctionDescriptor.ofVoid(ValueLayout.JAVA_LONG));
+                MethodHandle seedFoundMH = lookup.findVirtual(BedrockCrackerService.class, "onSeedFound",
+                        MethodType.methodType(void.class, long.class)).bindTo(this);
+                MethodHandle progressMH = lookup.findVirtual(BedrockCrackerService.class, "onProgress",
+                        MethodType.methodType(void.class, long.class)).bindTo(this);
+                MethodHandle initMH = lookup.findVirtual(BedrockCrackerService.class, "onInit",
+                        MethodType.methodType(void.class, long.class, long.class)).bindTo(this);
 
-                MemorySegment initCallbackNativePtr = createUpcall(lookup, BedrockCrackerService.class, "javaInitCallback",
-                        MethodType.methodType(void.class, long.class, long.class),
+                MemorySegment seedCallbackNativePtr = nativeHelper.createUpcall(seedFoundMH,
+                        FunctionDescriptor.ofVoid(ValueLayout.JAVA_LONG));
+                MemorySegment progressCallbackNativePtr = nativeHelper.createUpcall(progressMH,
+                        FunctionDescriptor.ofVoid(ValueLayout.JAVA_LONG));
+                MemorySegment initCallbackNativePtr = nativeHelper.createUpcall(initMH,
                         FunctionDescriptor.ofVoid(ValueLayout.JAVA_LONG, ValueLayout.JAVA_LONG));
-
-                MemorySegment progressCallbackNativePtr = createUpcall(lookup, BedrockCrackerService.class, "javaProgressCallback",
-                        MethodType.methodType(void.class, long.class),
-                        FunctionDescriptor.ofVoid(ValueLayout.JAVA_LONG));
 
                 MemorySegment blocksArraySegment = Block.allocateArray(blockInputs.size(), this.callbackArena);
                 for (int i = 0; i < blockInputs.size(); i++) {
@@ -182,9 +193,8 @@ public class BedrockCrackerService {
                 return finalCollectedSeeds;
 
             } catch (Throwable t) {
-                MinecraftClient.getInstance().execute(() -> 
-                    sendPlayerMessage(Text.literal("Cracking Error: " + t.getMessage()).formatted(Formatting.RED))
-                );
+                MinecraftClient.getInstance().execute(() -> sendPlayerMessage(
+                        Text.literal("Cracking Error: " + t.getMessage()).formatted(Formatting.RED)));
                 return Collections.emptyList();
             }
         }, crackerExecutor);
@@ -196,30 +206,40 @@ public class BedrockCrackerService {
             if (this.callbackArena != null && this.callbackArena.scope().isAlive()) {
                 this.callbackArena.close();
             }
-            
+
             MinecraftClient mc = MinecraftClient.getInstance();
             if (throwable != null) {
-                 sendPlayerMessage(Text.literal("Cracking task failed: " + throwable.getMessage()).formatted(Formatting.RED));
+                sendPlayerMessage(
+                        Text.literal("Cracking task failed: " + throwable.getMessage()).formatted(Formatting.RED));
+                mc.execute(() -> updateStatusOverlay(Text.literal("Cracking Failed: ").formatted(Formatting.RED)
+                        .append(Text.literal(throwable.getMessage()).formatted(Formatting.WHITE))));
             } else {
                 if (totalUnitsToProcess.get() > 0) {
                     unitsProcessedSoFar.set(totalUnitsToProcess.get());
                 }
                 if (mc.player != null) {
+                    mc.execute(
+                            () -> updateStatusOverlay(Text.literal("Cracking Finished!").formatted(Formatting.GREEN)));
                     String summaryMessage;
                     long seedsFromCallbackTotalCount = seedsFoundByCallbackCount.get();
-                    long seedsFromNativeFinalListCount = (seedsFromNativeFunction != null) ? seedsFromNativeFunction.size() : 0;
-                    
+                    long seedsFromNativeFinalListCount = (seedsFromNativeFunction != null)
+                            ? seedsFromNativeFunction.size()
+                            : 0;
+
                     if (seedsFromCallbackTotalCount > 0) {
-                        summaryMessage = "Cracking finished! " + seedsFromCallbackTotalCount + " seed(s) were discovered progressively (see list below).";
+                        summaryMessage = "Cracking finished! " + seedsFromCallbackTotalCount
+                                + " seed(s) were discovered progressively (see list below).";
                         if (seedsFromNativeFinalListCount > 0) {
                             if (seedsFromNativeFinalListCount != seedsFromCallbackTotalCount) {
-                                summaryMessage += " The native function also returned a final list of " + seedsFromNativeFinalListCount + " seed(s).";
+                                summaryMessage += " The native function also returned a final list of "
+                                        + seedsFromNativeFinalListCount + " seed(s).";
                             } else {
                                 summaryMessage += " The native function's final list confirmed these seeds.";
                             }
                         }
                     } else if (seedsFromNativeFinalListCount > 0) {
-                        summaryMessage = "Cracking finished! Native function returned " + seedsFromNativeFinalListCount + " final seed(s). No seeds were reported progressively via callback.";
+                        summaryMessage = "Cracking finished! Native function returned " + seedsFromNativeFinalListCount
+                                + " final seed(s). No seeds were reported progressively via callback.";
                     } else {
                         summaryMessage = "Cracking finished. No seeds found.";
                     }
@@ -250,7 +270,8 @@ public class BedrockCrackerService {
         if (total > 0 && current > total) {
             current = total;
         }
-        if (!isActive && total > 0 && current < total && crackingTaskFuture != null && crackingTaskFuture.isDone() && !crackingTaskFuture.isCompletedExceptionally()) {
+        if (!isActive && total > 0 && current < total && crackingTaskFuture != null && crackingTaskFuture.isDone()
+                && !crackingTaskFuture.isCompletedExceptionally()) {
             current = total;
         }
         return new CrackerProgressInfo(total, current, found, isActive);
@@ -258,6 +279,8 @@ public class BedrockCrackerService {
 
     public void requestStop() {
         bedrock_cracker_h.request_stop_crack_ffi();
+        MinecraftClient.getInstance()
+                .execute(() -> updateStatusOverlay(Text.literal("Cracking Stopped").formatted(Formatting.GRAY)));
         if (crackingTaskFuture == null || crackingTaskFuture.isDone()) {
             isCrackingInternal.set(false);
             bedrock_cracker_h.reset_cracker_state_ffi();
@@ -287,6 +310,5 @@ public class BedrockCrackerService {
             this.callbackArena = null;
         }
         bedrock_cracker_h.reset_cracker_state_ffi();
-        instanceForCallback = null;
     }
 }

@@ -9,18 +9,20 @@ import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.text.Text;
 
 public class StopCommand {
-    public static void register(LiteralArgumentBuilder<FabricClientCommandSource> parent, BedrockCrackerService crackerService) {
+    public static void register(LiteralArgumentBuilder<FabricClientCommandSource> parent,
+            BedrockCrackerService crackerService) {
         parent.then(ClientCommandManager.literal("stop")
-            .executes(context -> {
-                IngameNetherBedrockCracker.LOGGER.info("'/nethercracker stop' command executed.");
+                .executes(context -> {
+                    IngameNetherBedrockCracker.LOGGER.info("'/inbc stop' command executed.");
 
-                if (crackerService.isCrackingActive()) {
-                    crackerService.requestStop();
-                    context.getSource().sendFeedback(Text.literal("Sent stop request to the cracking process. Check /nethercracker info for status."));
-                } else {
-                    context.getSource().sendFeedback(Text.literal("No cracking process is currently active."));
-                }
-                return Command.SINGLE_SUCCESS;
-            }));
+                    if (crackerService.isCrackingActive()) {
+                        crackerService.requestStop();
+                        context.getSource().sendFeedback(Text
+                                .literal("Sent stop request to the cracking process. Check /inbc info for status."));
+                    } else {
+                        context.getSource().sendFeedback(Text.literal("No cracking process is currently active."));
+                    }
+                    return Command.SINGLE_SUCCESS;
+                }));
     }
 }
