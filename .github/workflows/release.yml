@@ -1,0 +1,100 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  release:
+    types: [created]
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    strategy:
+      matrix:
+        java: [21]
+        os: [ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Init Submodule
+        run: |
+          git submodule update --init --recursive
+
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ matrix.java }}
+          distribution: "graalvm"
+
+      - name: Install LLVM
+        uses: KyleMayes/install-llvm-action@v2
+        with:
+          version: "13.0"
+
+      - name: Install libtinfo5
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y software-properties-common
+          sudo add-apt-repository -y "deb http://azure.archive.ubuntu.com/ubuntu/ jammy main universe"
+          sudo apt-get update
+          sudo apt-get install -y libtinfo5
+          
+      - name: Build jextract
+        working-directory: ./jextract 
+        run: |
+          chmod +x ./gradlew
+          ./gradlew -Pjdk21_home="$JAVA_HOME" -Pllvm_home="${{ env.LLVM_PATH }}" clean verify
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android, x86_64-linux-android, x86_64-pc-windows-gnu, aarch64-pc-windows-gnullvm, x86_64-unknown-linux-musl, aarch64-unknown-linux-musl, x86_64-apple-darwin, aarch64-apple-darwin
+
+      - name: Setup Zig
+        uses: mlugg/setup-zig@v1
+        with:
+          version: 0.13.0
+
+      - name: Install Android NDK
+        id: setup-ndk
+        uses: nttld/setup-ndk@v1
+        with:
+          ndk-version: r26b
+
+      - name: Build Native
+        run: |
+          cargo install cargo-zigbuild cargo-ndk
+          cd src/main/nbc
+          export ANDROID_NDK_HOME=${{ steps.setup-ndk.outputs.ndk-path }}
+          export RUSTFLAGS="-C target-feature=-crt-static"
+          cargo ndk -t aarch64-linux-android build --release
+          cargo ndk -t x86_64-linux-android build --release
+          cargo zigbuild --target x86_64-pc-windows-gnu --release
+          cargo zigbuild --target aarch64-pc-windows-gnullvm --release
+          cargo zigbuild --target x86_64-unknown-linux-musl --release
+          cargo zigbuild --target aarch64-unknown-linux-musl --release
+          cargo zigbuild --target x86_64-apple-darwin --release
+          cargo zigbuild --target aarch64-apple-darwin --release
+
+      - name: Build All JARs
+        run: |
+          chmod +x ./gradlew
+          ./gradlew buildAll
+
+      # - name: List Artifacts
+      #   run: ls -lh build/libs/*.jar
+
+      - name: Create Release and Upload Assets
+        uses: softprops/action-gh-release@v2
+        with:
+            name: INBC ${{ github.ref_name }}
+            draft: true 
+            files: ./build/libs/*.jar

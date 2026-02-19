@@ -1,95 +1,102 @@
 import dev.tmquan2508.netherbedrockseedcracker.buildscript.CreateJavaBindingsTask
-import dev.tmquan2508.netherbedrockseedcracker.buildscript.CopyNativeLibTask
 
 plugins {
-	id 'java'
-    id'fabric-loom' version '1.10-SNAPSHOT'
-	id 'maven-publish'
+    id 'java'
+    id 'fabric-loom' version '1.10-SNAPSHOT'
+    id 'maven-publish'
+}
+
+def nativePlatforms = [
+    [id: 'android-arm64', target: 'aarch64-linux-android', lib: 'libbedrock_cracker.so'],
+    [id: 'android-x64',   target: 'x86_64-linux-android',  lib: 'libbedrock_cracker.so'],
+    [id: 'windows-x64',   target: 'x86_64-pc-windows-gnu', lib: 'bedrock_cracker.dll'],
+    [id: 'windows-arm64', target: 'aarch64-pc-windows-gnullvm', lib: 'bedrock_cracker.dll'],
+    [id: 'linux-x64',     target: 'x86_64-unknown-linux-musl', lib: 'libbedrock_cracker.so'],
+    [id: 'linux-arm64',   target: 'aarch64-unknown-linux-musl', lib: 'libbedrock_cracker.so'],
+    [id: 'macos-x64',     target: 'x86_64-apple-darwin',   lib: 'libbedrock_cracker.dylib'],
+    [id: 'macos-arm64',   target: 'aarch64-apple-darwin',   lib: 'libbedrock_cracker.dylib']
+]
+
+def getCurrentPlatformId() {
+    def os = System.getProperty("os.name").toLowerCase()
+    def arch = System.getProperty("os.arch").toLowerCase()
+    if (os.contains("win")) return "windows-x64"
+    if (os.contains("mac")) return arch.contains("aarch64") ? "macos-arm64" : "macos-x64"
+    if (os.contains("linux")) return arch.contains("aarch64") ? "linux-arm64" : "linux-x64"
+    return null
 }
 
 java {
-	toolchain {
-		languageVersion = JavaLanguageVersion.of(21)
-	}
-	withSourcesJar()
-}
-
-tasks.register('createJavaBindings', CreateJavaBindingsTask) {
-	group = 'build'
-	description = 'Generates Java bindings for the native library using JExtract.'
-}
-
-tasks.register('copyNativeLib', CopyNativeLibTask) {
-	group = 'build'
-	description = 'Copies bedrock_cracker native library into resources/native.'
-}
-
-tasks.named('compileJava') {
-	dependsOn tasks.named('createJavaBindings')
-	dependsOn tasks.named('copyNativeLib')
+    toolchain { languageVersion = JavaLanguageVersion.of(21) }
+    withSourcesJar()
 }
 
 sourceSets {
-	main {
-		java {
-			srcDirs = ['src/main/java']
-		}
-	}
-}
-
-sourceCompatibility = JavaVersion.VERSION_21
-targetCompatibility = JavaVersion.VERSION_21
-
-archivesBaseName = project.archives_base_name
-version = project.mod_version
-group = project.maven_group
-
-repositories {
-	mavenCentral()
-	maven { url 'https://maven.fabricmc.net/' }
-}
-
-dependencies {
-	minecraft "com.mojang:minecraft:${project.minecraft_version}"
-	mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
-	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
-	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
-}
-
-processResources {
-	inputs.property "version", project.version
-	filesMatching("fabric.mod.json") {
-		expand "version": project.version
-	}
-}
-
-tasks.withType(JavaCompile).configureEach {
-	it.options.encoding = 'UTF-8'
-	it.options.compilerArgs += ["--enable-preview", "-Xlint:-preview"]
-}
-
-loom {
-    runs {
-        client {
-            vmArg "--enable-preview"
+    main {
+        java {
+            srcDirs = ['src/main/java', 'build/generated/sources/jextract/main/java']
         }
     }
 }
 
+tasks.register('createJavaBindings', CreateJavaBindingsTask)
+
+tasks.withType(JavaCompile).configureEach {
+    dependsOn 'createJavaBindings'
+    it.options.encoding = 'UTF-8'
+    it.options.compilerArgs += ["--enable-preview", "-Xlint:-preview"]
+}
 
 jar {
-	from("LICENSE") {
-		rename { "${it}_${project.archivesBaseName}" }
-	}
+    def currentId = getCurrentPlatformId()
+    def platform = nativePlatforms.find { it.id == currentId }
+    if (platform) {
+        from("src/main/nbc/target/release/${platform.lib}") {
+            into "nativelib"
+        }
+    }
+    from("LICENSE") { rename { "${it}_${project.archivesBaseName}" } }
+}
+
+nativePlatforms.each { platform ->
+    def platformJarName = "jar-${platform.id}"
+    tasks.register(platformJarName, Jar) {
+        group = 'build'
+        archiveClassifier = platform.id
+        from sourceSets.main.output
+        from("src/main/nbc/target/${platform.target}/release/${platform.lib}") {
+            into "nativelib"
+        }
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    }
+}
+
+tasks.register('buildAll') {
+    group = 'build'
+    dependsOn nativePlatforms.collect { "jar-${it.id}" }
+}
+
+loom {
+    runs { client { vmArg "--enable-preview" } }
+}
+
+repositories {
+    mavenCentral()
+    maven { url 'https://maven.fabricmc.net/' }
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:${project.minecraft_version}"
+    mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
+    modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+    modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+}
+
+processResources {
+    inputs.property "version", project.version
+    filesMatching("fabric.mod.json") { expand "version": project.version }
 }
 
 publishing {
-	publications {
-		mavenJava(MavenPublication) {
-			from components.java
-		}
-	}
-	repositories {
-		
-	}
+    publications { mavenJava(MavenPublication) { from components.java } }
 }

@@ -35,7 +35,7 @@ public class IngameNetherBedrockCracker implements ClientModInitializer {
             ModContainer modContainer = FabricLoader.getInstance().getModContainer(MOD_ID)
                     .orElseThrow(() -> new RuntimeException("Could not find mod container for " + MOD_ID));
             Path libraryInJarPath = modContainer.findPath(libraryPathInJar)
-                    .orElseThrow(() -> new IOException("Native library '" + libraryPathInJar + "' not found in mod JAR. Ensure it's in resources/native/"));
+                    .orElseThrow(() -> new IOException("Native library '" + libraryPathInJar + "' not found in mod JAR. Ensure it's in nativelib/"));
 
             String prefix = baseLibraryName + "_";
             String suffix;
